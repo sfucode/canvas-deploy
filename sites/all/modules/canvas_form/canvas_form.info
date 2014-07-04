@@ -1,0 +1,4 @@
+name = Canvas Deployment Form
+description = Form page for processing requests
+core = 7.x
+

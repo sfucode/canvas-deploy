@@ -1,0 +1,340 @@
+<?php
+/**
+ * Implements hook_permission().
+ */
+function canvas_form_permission(){
+    return array(
+            'access canvas form' => array(
+                'title' => t('Access the canvas form functionality'),
+                )
+            );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function canvas_form_menu() {
+    $items = array();
+
+    $items['canvas-form'] = array(
+            'title' => 'Deploy LTI to Canvas',
+            'page callback' => 'drupal_get_form',
+            'page arguments' => array('course_form'),
+            'access arguments' => array('access canvas form'),
+            'weight' => 4,
+            );
+    return $items;
+}
+
+function course_form($form, &$form_state) {
+    $form = array();
+
+    $options = _get_terms();
+
+    $form['choose_course']['destination_term'] = array(
+            '#type' => 'select',
+            '#title' => t('Destination term'),
+            '#options' => $options,
+            '#description' => t('Select a term'),
+            );
+    $form['choose_course']['source_term'] = array(
+            '#type' => 'select',
+            '#title' => t('Source term'),
+            '#prefix'=>'<div id="dropdown-third-replace">',
+            '#suffix'=>'</div>',
+            '#options'=>$options,
+            '#validated' => TRUE,
+            '#ajax' => array(
+                'event' => 'change',
+                'callback' => 'canvas_form_term_callback',
+                'wrapper' => 'checkboxes-four-replace',
+                ),
+            );
+
+    drupal_add_js("
+            function checkUncheckAll(theElement){
+            var theForm = theElement.form, z = 0;
+            for(z=0; z<theForm.length;z++){
+            if(theForm[z].type == 'checkbox' && theForm[z].name != 'checkall'){
+            theForm[z].checked = theElement.checked;
+            }
+            }
+            }
+            ", 'inline');
+
+            $form['choose_course']['checkall'] = array(
+                    '#type' => 'checkbox',
+                    '#title' => t('Select / Unselect all'),
+                    '#attributes' => array('onclick' => 'checkUncheckAll(this);'),
+                    );
+
+            if (isset($form_state['values']['source_term'])) {
+                $form['choose_course']['course'] = array(
+                        '#prefix'=>'<div id="checkboxes-four-replace">',
+                        '#type' => 'checkboxes',
+                        '#multicolumn' => array('width' => 8),
+                        '#options' => _get_courses_for_checkboxes($form_state['values']['source_term']),
+                        '#suffix'=>'</div></div>',
+                        );
+
+            } else { // default case
+                $form['choose_course']['course'] = array(
+                        '#prefix'=>'<div id="checkboxes-four-replace">',
+                        '#type' => 'checkboxes',
+                        '#options' => array('0' => 'Please choose terms'),
+                        // '#default_value' => isset($values['course']) ? $values['course'] : array('8'),
+                        '#suffix'=>'</div></div>',
+                        );
+            }
+
+            $form['choose_course']['submit'] = array(
+                    '#type' => 'submit',
+                    '#default_value' => t('Clone'),
+                    );
+
+            return $form;
+}
+
+function course_form_submit($form_id, &$form_state) {
+
+    $_SESSION['http_request_count'] = 0;
+    if (isset($form_state['values']['course']) && isset($form_state['values']['destination_term'])) {
+        $courses = $form_state['values']['course'];
+        $term = $form_state['values']['destination_term'];
+    }
+
+    $batch = _cloner_setup($courses, $term);
+    batch_set($batch);
+}
+
+function _cloner_setup($courses, $term) {
+
+    global $courseCount;
+    foreach ($courses as &$value) {
+        if ($value != 0) {
+            $courseCount++;
+        }
+    }
+
+    drupal_set_message(t('Cloned @num courses', array('@num' => $courseCount)));
+
+    $operations = array();
+    foreach ($courses as &$value) {
+        if ($value != 0) {
+            $operations[] = array('_clone_course', array($value, $term, t('(Operation @operation)', array('@operation' => $value))));
+            // _clone_course($value, $term);
+        }
+    }
+    $batch = array(
+            'operations' => $operations,
+            'finished' => 'batch_example_finished',
+            'title' => t('Processing courses'),
+            'init_message' => t('Course clone is starting.'),
+            'progress_message' => t('Processed @current out of @total.'),
+            'error_message' => t('Course clone has encountered an error.'),
+            );
+    return $batch;
+}
+
+function batch_example_finished($success, $results, $operations) {
+    if ($success) {
+        // Here we could do something meaningful with the results.
+        // We just display the number of nodes we processed...
+        drupal_set_message(t('@count results processed in @requests HTTP requests.', array('@count' => count($results), '@requests' => _batch_example_get_http_requests())));
+        // drupal_set_message(t('These courses were cloned "%final"', array('%final' => end($results))));
+    }
+    else {
+        // An error occurred.
+        // $operations contains the operations that remained unprocessed.
+        $error_operation = reset($operations);
+        drupal_set_message(t('An error occurred while processing @operation with arguments : @args', array('@operation' => $error_operation[0], '@args' => print_r($error_operation[0], TRUE))));
+    }
+}
+
+/**
+ * ajax callback for form
+ */
+function canvas_form_term_callback($form, $form_state) {
+    return $form['choose_course']['course'];
+}
+
+/* ***************** function to return course list for checkboxes */
+function _get_courses_for_checkboxes($term_nid) {
+    $query = db_select('node','n');
+    $query->leftJoin('field_data_field_term', 'f', 'f.entity_id = n.nid');
+    $query->leftJoin('field_data_field_course_code', 'c', 'c.entity_id = n.nid');
+    $query->fields('n', array('nid', 'title'));
+    $query->fields('c', array('field_course_code_value'));
+    $query->condition('n.type', 'course_offering', '=');
+    $query->condition('f.field_term_target_id', $term_nid, '=');
+    $query->orderBy('n.title', 'ASC');
+
+    $result = $query->execute();
+
+    $info = array();
+    $info = "";
+    foreach ($result as $record) {
+        $info[$record->nid] = $record->field_course_code_value;
+    }
+    return $info;
+
+}
+
+
+/* *********************************** supplemental functions */
+
+function _get_terms() {
+    $info = array();
+
+    $query = db_select('node','n');
+    $query->fields('n', array('nid', 'title'));
+    $query->condition('n.type', 'term', '=');
+    $query->orderBy('n.nid', 'ASC');
+
+    $result = $query->execute();
+
+    $info['0'] = '-- Choose --';
+    foreach ($result as $record) {
+        // if(isset($info[$record->nid])) {
+        $info[$record->nid] = $record->title;
+        // }
+    }
+
+    return $info;
+}
+
+
+function _get_terms_nids() {
+    $query = db_select('node','n');
+    $query->fields('n', array('nid'));
+    $query->condition('n.type', 'term', '=');
+    $query->orderBy('n.nid', 'ASC');
+
+    $result = $query->execute();
+
+    $info = array();
+    $info['0'] = '-- Choose --';
+    foreach ($result as $record) {
+        $info[] = $record->nid;
+    }
+
+    return $info;
+}
+
+function _clone_course($course_nid, $term_nid, $operation_details, &$context) {
+    /*
+       $node = node_load($course_nid, NULL, TRUE);
+       $context['results'][] = $node->nid . ' : ' . check_plain($node->title);
+       $context['message'] = t('Cloning course "@title"', array('@title' => $node->title)) . ' ' . $operation_details;
+     */
+    if (empty($context['sandbox'])) {
+        $context['sandbox'] = array();
+        $context['sandbox']['progress'] = 0;
+        $context['sandbox']['current_node'] = 0;
+
+        // Save node count for the termination message.
+        // $context['sandbox']['max'] = db_query('SELECT COUNT(DISTINCT nid) FROM {node}')->fetchField();
+        // drupal_set_message('Count is '.$courseCount);
+        $context['sandbox']['max'] = $courseCount;
+    }
+
+    $new_course_nid = _clone_node($course_nid, $term_nid);
+
+    $query="SELECT node.nid AS nid, node.type AS type FROM {node} node
+        LEFT JOIN {field_data_field_course} field_data_field_course ON node.nid = field_data_field_course.entity_id
+        AND (field_data_field_course.entity_type = 'node' AND field_data_field_course.deleted = '0')
+        LEFT JOIN {node} node_field_data_field_course ON field_data_field_course.field_course_target_id = node_field_data_field_course.nid
+        WHERE (( (node_field_data_field_course.nid = '$course_nid' ) )AND(( (node.status = '1') AND (node.type IN  ('material','textbook')) )))";
+    $result1 = db_query($query);
+    foreach ($result1 as $material) {
+        $new_material_nid = _clone_node($material->nid, $new_course_nid);
+        if ($material->type =="material") {
+            $query="SELECT node.nid AS nid FROM {node} node
+                LEFT JOIN {field_data_field_material} field_data_field_material ON node.nid = field_data_field_material.entity_id
+                AND (field_data_field_material.entity_type = 'node' AND field_data_field_material.deleted = '0')
+                LEFT JOIN {node} node_field_data_field_material
+                ON field_data_field_material.field_material_target_id = node_field_data_field_material.nid
+                WHERE (( (node_field_data_field_material.nid = '$material->nid' ) )
+                        AND(( (node.status = '1') AND (node.type IN  ('item')) )))";
+            $result2 = db_query($query);
+            foreach ($result2 as $item) {
+                $node = node_load($item->nid, NULL, TRUE);
+                $context['results'][] = $node->nid . ' : ' . check_plain($node->title) . ' ' . $operation_details;
+
+                // Update our progress information.
+                $context['sandbox']['progress']++;
+                $context['sandbox']['current_node'] = $node->nid;
+                $context['message'] = check_plain($node->title);
+
+                $item_nid = _clone_node($item->nid, $new_material_nid);
+            }
+        }
+    }
+
+    if ($context['sandbox']['progress'] != $context['sandbox']['max']) {
+        $context['finished'] = ($context['sandbox']['progress'] >= $context['sandbox']['max']);
+    }
+    _batch_example_update_http_requests();
+}
+
+function _clone_node($node_nid, $parent_nid) {
+    $node = node_load($node_nid);
+    // drupal_set_message('Node is: '.$node_nid.' Type is: '.$node->type);
+
+    if ($node->type == "course_offering") {
+        $node->field_term['und'][0]['target_id'] = $parent_nid;
+        $node->field_enrollment_cap = '';
+    } elseif ($node->type == "material" || $node->type =="textbook") {
+        $node->field_course['und'][0]['target_id'] = $parent_nid;
+    } elseif ($node->type == "item") {
+        $node->field_material['und'][0]['target_id'] = $parent_nid;
+    } else {
+        die("Cloning of this type is not supported");
+    }
+    unset($node->nid);
+    unset($node->vid);
+    if (isset($node->field_clearance['und']))
+        unset($node->field_clearance['und']);
+    $node=node_submit($node);
+    node_save($node);
+    return $node->nid;
+}
+
+function _reset_clearance($term_nid) {
+    $query="
+        SELECT DISTINCT node_field_data_field_clearance.nid AS node_field_data_field_clearance_nid
+        FROM
+        {node} node
+    LEFT JOIN {field_data_field_clearance} field_data_field_clearance ON node.nid = field_data_field_clearance.entity_id AND (field_data_field_clearance.entity_type = 'node' AND field_data_field_clearance.deleted = '0')
+        INNER JOIN {node} node_field_data_field_clearance ON field_data_field_clearance.field_clearance_target_id = node_field_data_field_clearance.nid
+        LEFT JOIN {field_data_field_material} field_data_field_material ON node.nid = field_data_field_material.entity_id AND (field_data_field_material.entity_type = 'node' AND field_data_field_material.deleted = '0')
+        LEFT JOIN {node} node_field_data_field_material ON field_data_field_material.field_material_target_id = node_field_data_field_material.nid
+        LEFT JOIN {field_data_field_course} node_field_data_field_material__field_data_field_course ON node_field_data_field_material.nid = node_field_data_field_material__field_data_field_course.entity_id AND (node_field_data_field_material__field_data_field_course.entity_type = 'node' AND node_field_data_field_material__field_data_field_course.deleted = '0')
+        LEFT JOIN {node} node_field_data_field_course ON node_field_data_field_material__field_data_field_course.field_course_target_id = node_field_data_field_course.nid
+        LEFT JOIN {field_data_field_term} node_field_data_field_course__field_data_field_term ON node_field_data_field_course.nid = node_field_data_field_course__field_data_field_term.entity_id AND (node_field_data_field_course__field_data_field_term.entity_type = 'node' AND node_field_data_field_course__field_data_field_term.deleted = '0')
+        LEFT JOIN {node} node_field_data_field_term ON node_field_data_field_course__field_data_field_term.field_term_target_id = node_field_data_field_term.nid
+        INNER JOIN {field_data_field_clearance_status} node_field_data_field_clearance__field_data_field_clearance_status ON node_field_data_field_clearance.nid = node_field_data_field_clearance__field_data_field_clearance_status.entity_id AND (node_field_data_field_clearance__field_data_field_clearance_status.entity_type = 'node' AND node_field_data_field_clearance__field_data_field_clearance_status.deleted = '0')
+        WHERE (( (node_field_data_field_term.nid = '$term_nid' ) )AND(( (node.status = '1') AND (node.type IN  ('item')) AND (node_field_data_field_clearance__field_data_field_clearance_status.field_clearance_status_value = 'Cleared') )))
+        ";
+
+    $result = db_query($query);
+    foreach ($result as $item) {
+        $myClearance = node_load($item->node_field_data_field_clearance_nid);
+        $myClearance->field_clearance_status['und'][0]['value'] = 'Pending';
+        unset($myClearance->field_cost['und']);
+        $myClearance = node_submit($myClearance);
+        node_save($myClearance);
+    }
+}
+
+/**
+ * Utility function to count the HTTP requests in a session variable.
+ */
+function _batch_example_update_http_requests() {
+    $_SESSION['http_request_count']++;
+}
+
+function _batch_example_get_http_requests() {
+    return !empty($_SESSION['http_request_count']) ? $_SESSION['http_request_count'] : 0;
+}
+
