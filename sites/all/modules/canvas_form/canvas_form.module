@@ -4,10 +4,10 @@
  */
 function canvas_form_permission(){
     return array(
-            'access canvas form' => array(
-                'title' => t('Access the canvas form functionality'),
-                )
-            );
+        'access canvas form' => array(
+            'title' => t('Access the canvas form functionality'),
+        )
+    );
 }
 
 /**
@@ -17,12 +17,12 @@ function canvas_form_menu() {
     $items = array();
 
     $items['canvas-form'] = array(
-            'title' => 'Deploy LTI to Canvas',
-            'page callback' => 'drupal_get_form',
-            'page arguments' => array('course_form'),
-            'access arguments' => array('access canvas form'),
-            'weight' => 4,
-            );
+        'title' => 'Deploy LTI to Canvas',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('course_form'),
+        'access arguments' => array('access canvas form'),
+        'weight' => 4,
+    );
     return $items;
 }
 
@@ -32,67 +32,67 @@ function course_form($form, &$form_state) {
     $options = _get_terms();
 
     $form['choose_course']['destination_term'] = array(
-            '#type' => 'select',
-            '#title' => t('Destination term'),
-            '#options' => $options,
-            '#description' => t('Select a term'),
-            );
+        '#type' => 'select',
+        '#title' => t('Destination term'),
+        '#options' => $options,
+        '#description' => t('Select a term'),
+    );
     $form['choose_course']['source_term'] = array(
-            '#type' => 'select',
-            '#title' => t('Source term'),
-            '#prefix'=>'<div id="dropdown-third-replace">',
-            '#suffix'=>'</div>',
-            '#options'=>$options,
-            '#validated' => TRUE,
-            '#ajax' => array(
-                'event' => 'change',
-                'callback' => 'canvas_form_term_callback',
-                'wrapper' => 'checkboxes-four-replace',
-                ),
-            );
+        '#type' => 'select',
+        '#title' => t('Source term'),
+        '#prefix'=>'<div id="dropdown-third-replace">',
+        '#suffix'=>'</div>',
+        '#options'=>$options,
+        '#validated' => TRUE,
+        '#ajax' => array(
+            'event' => 'change',
+            'callback' => 'canvas_form_term_callback',
+            'wrapper' => 'checkboxes-four-replace',
+        ),
+    );
 
     drupal_add_js("
-            function checkUncheckAll(theElement){
+        function checkUncheckAll(theElement){
             var theForm = theElement.form, z = 0;
             for(z=0; z<theForm.length;z++){
-            if(theForm[z].type == 'checkbox' && theForm[z].name != 'checkall'){
-            theForm[z].checked = theElement.checked;
-            }
-            }
-            }
-            ", 'inline');
+                if(theForm[z].type == 'checkbox' && theForm[z].name != 'checkall'){
+                    theForm[z].checked = theElement.checked;
+}
+}
+}
+", 'inline');
 
-            $form['choose_course']['checkall'] = array(
-                    '#type' => 'checkbox',
-                    '#title' => t('Select / Unselect all'),
-                    '#attributes' => array('onclick' => 'checkUncheckAll(this);'),
-                    );
+$form['choose_course']['checkall'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Select / Unselect all'),
+    '#attributes' => array('onclick' => 'checkUncheckAll(this);'),
+);
 
-            if (isset($form_state['values']['source_term'])) {
-                $form['choose_course']['course'] = array(
-                        '#prefix'=>'<div id="checkboxes-four-replace">',
-                        '#type' => 'checkboxes',
-                        '#multicolumn' => array('width' => 8),
-                        '#options' => _get_courses_for_checkboxes($form_state['values']['source_term']),
-                        '#suffix'=>'</div></div>',
-                        );
+if (isset($form_state['values']['source_term'])) {
+    $form['choose_course']['course'] = array(
+        '#prefix'=>'<div id="checkboxes-four-replace">',
+        '#type' => 'checkboxes',
+        '#multicolumn' => array('width' => 8),
+        '#options' => _get_courses_for_checkboxes($form_state['values']['source_term']),
+        '#suffix'=>'</div></div>',
+    );
 
-            } else { // default case
-                $form['choose_course']['course'] = array(
-                        '#prefix'=>'<div id="checkboxes-four-replace">',
-                        '#type' => 'checkboxes',
-                        '#options' => array('0' => 'Please choose terms'),
-                        // '#default_value' => isset($values['course']) ? $values['course'] : array('8'),
-                        '#suffix'=>'</div></div>',
-                        );
-            }
+} else { // default case
+    $form['choose_course']['course'] = array(
+        '#prefix'=>'<div id="checkboxes-four-replace">',
+        '#type' => 'checkboxes',
+        '#options' => array('0' => 'Please choose terms'),
+        // '#default_value' => isset($values['course']) ? $values['course'] : array('8'),
+        '#suffix'=>'</div></div>',
+    );
+}
 
-            $form['choose_course']['submit'] = array(
-                    '#type' => 'submit',
-                    '#default_value' => t('Clone'),
-                    );
+$form['choose_course']['submit'] = array(
+    '#type' => 'submit',
+    '#default_value' => t('Clone'),
+);
 
-            return $form;
+return $form;
 }
 
 function course_form_submit($form_id, &$form_state) {
@@ -126,13 +126,13 @@ function _cloner_setup($courses, $term) {
         }
     }
     $batch = array(
-            'operations' => $operations,
-            'finished' => 'batch_example_finished',
-            'title' => t('Processing courses'),
-            'init_message' => t('Course clone is starting.'),
-            'progress_message' => t('Processed @current out of @total.'),
-            'error_message' => t('Course clone has encountered an error.'),
-            );
+        'operations' => $operations,
+        'finished' => 'batch_example_finished',
+        'title' => t('Processing courses'),
+        'init_message' => t('Course clone is starting.'),
+        'progress_message' => t('Processed @current out of @total.'),
+        'error_message' => t('Course clone has encountered an error.'),
+    );
     return $batch;
 }
 
@@ -182,12 +182,26 @@ function _get_courses_for_checkboxes($term_nid) {
 
 
 /* *********************************** supplemental functions */
+function _get_terms() {
+    $query = new EntityFieldQuery();
+    $query->entityCondition('entity_type', 'node')
+        ->entityCondition('bundle', 'term')
+        ->propertyCondition('status', 1)
+        $result = $query->execute();
+    if (isset($result['node'])) {
+        $term_items_nids = array_keys($result['node']);
+        $term_items = entity_load('node', $term_items_nids);
+    }
+}
+
+function _build_term_select() {
+}
 
 function _get_terms() {
     $info = array();
 
     $query = db_select('node','n');
-    $query->fields('n', array('nid', 'title'));
+    $query->fields('n', array('nid', 'title', 'canvas_cid'));
     $query->condition('n.type', 'term', '=');
     $query->orderBy('n.nid', 'ASC');
 
@@ -196,7 +210,7 @@ function _get_terms() {
     $info['0'] = '-- Choose --';
     foreach ($result as $record) {
         // if(isset($info[$record->nid])) {
-        $info[$record->nid] = $record->title;
+        $info[$record->canvas_cid] = $record->title;
         // }
     }
 
@@ -255,7 +269,7 @@ function _clone_course($course_nid, $term_nid, $operation_details, &$context) {
                 LEFT JOIN {node} node_field_data_field_material
                 ON field_data_field_material.field_material_target_id = node_field_data_field_material.nid
                 WHERE (( (node_field_data_field_material.nid = '$material->nid' ) )
-                        AND(( (node.status = '1') AND (node.type IN  ('item')) )))";
+                AND(( (node.status = '1') AND (node.type IN  ('item')) )))";
             $result2 = db_query($query);
             foreach ($result2 as $item) {
                 $node = node_load($item->nid, NULL, TRUE);
@@ -304,27 +318,27 @@ function _reset_clearance($term_nid) {
     $query="
         SELECT DISTINCT node_field_data_field_clearance.nid AS node_field_data_field_clearance_nid
         FROM
-        {node} node
-    LEFT JOIN {field_data_field_clearance} field_data_field_clearance ON node.nid = field_data_field_clearance.entity_id AND (field_data_field_clearance.entity_type = 'node' AND field_data_field_clearance.deleted = '0')
-        INNER JOIN {node} node_field_data_field_clearance ON field_data_field_clearance.field_clearance_target_id = node_field_data_field_clearance.nid
-        LEFT JOIN {field_data_field_material} field_data_field_material ON node.nid = field_data_field_material.entity_id AND (field_data_field_material.entity_type = 'node' AND field_data_field_material.deleted = '0')
-        LEFT JOIN {node} node_field_data_field_material ON field_data_field_material.field_material_target_id = node_field_data_field_material.nid
-        LEFT JOIN {field_data_field_course} node_field_data_field_material__field_data_field_course ON node_field_data_field_material.nid = node_field_data_field_material__field_data_field_course.entity_id AND (node_field_data_field_material__field_data_field_course.entity_type = 'node' AND node_field_data_field_material__field_data_field_course.deleted = '0')
-        LEFT JOIN {node} node_field_data_field_course ON node_field_data_field_material__field_data_field_course.field_course_target_id = node_field_data_field_course.nid
-        LEFT JOIN {field_data_field_term} node_field_data_field_course__field_data_field_term ON node_field_data_field_course.nid = node_field_data_field_course__field_data_field_term.entity_id AND (node_field_data_field_course__field_data_field_term.entity_type = 'node' AND node_field_data_field_course__field_data_field_term.deleted = '0')
-        LEFT JOIN {node} node_field_data_field_term ON node_field_data_field_course__field_data_field_term.field_term_target_id = node_field_data_field_term.nid
-        INNER JOIN {field_data_field_clearance_status} node_field_data_field_clearance__field_data_field_clearance_status ON node_field_data_field_clearance.nid = node_field_data_field_clearance__field_data_field_clearance_status.entity_id AND (node_field_data_field_clearance__field_data_field_clearance_status.entity_type = 'node' AND node_field_data_field_clearance__field_data_field_clearance_status.deleted = '0')
-        WHERE (( (node_field_data_field_term.nid = '$term_nid' ) )AND(( (node.status = '1') AND (node.type IN  ('item')) AND (node_field_data_field_clearance__field_data_field_clearance_status.field_clearance_status_value = 'Cleared') )))
-        ";
+{node} node
+LEFT JOIN {field_data_field_clearance} field_data_field_clearance ON node.nid = field_data_field_clearance.entity_id AND (field_data_field_clearance.entity_type = 'node' AND field_data_field_clearance.deleted = '0')
+INNER JOIN {node} node_field_data_field_clearance ON field_data_field_clearance.field_clearance_target_id = node_field_data_field_clearance.nid
+LEFT JOIN {field_data_field_material} field_data_field_material ON node.nid = field_data_field_material.entity_id AND (field_data_field_material.entity_type = 'node' AND field_data_field_material.deleted = '0')
+LEFT JOIN {node} node_field_data_field_material ON field_data_field_material.field_material_target_id = node_field_data_field_material.nid
+LEFT JOIN {field_data_field_course} node_field_data_field_material__field_data_field_course ON node_field_data_field_material.nid = node_field_data_field_material__field_data_field_course.entity_id AND (node_field_data_field_material__field_data_field_course.entity_type = 'node' AND node_field_data_field_material__field_data_field_course.deleted = '0')
+LEFT JOIN {node} node_field_data_field_course ON node_field_data_field_material__field_data_field_course.field_course_target_id = node_field_data_field_course.nid
+LEFT JOIN {field_data_field_term} node_field_data_field_course__field_data_field_term ON node_field_data_field_course.nid = node_field_data_field_course__field_data_field_term.entity_id AND (node_field_data_field_course__field_data_field_term.entity_type = 'node' AND node_field_data_field_course__field_data_field_term.deleted = '0')
+LEFT JOIN {node} node_field_data_field_term ON node_field_data_field_course__field_data_field_term.field_term_target_id = node_field_data_field_term.nid
+INNER JOIN {field_data_field_clearance_status} node_field_data_field_clearance__field_data_field_clearance_status ON node_field_data_field_clearance.nid = node_field_data_field_clearance__field_data_field_clearance_status.entity_id AND (node_field_data_field_clearance__field_data_field_clearance_status.entity_type = 'node' AND node_field_data_field_clearance__field_data_field_clearance_status.deleted = '0')
+WHERE (( (node_field_data_field_term.nid = '$term_nid' ) )AND(( (node.status = '1') AND (node.type IN  ('item')) AND (node_field_data_field_clearance__field_data_field_clearance_status.field_clearance_status_value = 'Cleared') )))
+";
 
-    $result = db_query($query);
-    foreach ($result as $item) {
-        $myClearance = node_load($item->node_field_data_field_clearance_nid);
-        $myClearance->field_clearance_status['und'][0]['value'] = 'Pending';
-        unset($myClearance->field_cost['und']);
-        $myClearance = node_submit($myClearance);
-        node_save($myClearance);
-    }
+$result = db_query($query);
+foreach ($result as $item) {
+    $myClearance = node_load($item->node_field_data_field_clearance_nid);
+    $myClearance->field_clearance_status['und'][0]['value'] = 'Pending';
+    unset($myClearance->field_cost['und']);
+    $myClearance = node_submit($myClearance);
+    node_save($myClearance);
+}
 }
 
 /**
