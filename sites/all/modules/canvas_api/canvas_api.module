@@ -1,0 +1,141 @@
+<?php
+/**
+ * @file
+ * This module provides functions and a UI for
+ * interacting with Canvas
+ *
+ */
+class CanvasApi {
+    public $count = 0;
+    public $token = "Bearer 9024KpNNmC5KaJAl1Kn00bmNGR17uucFVdlEfWHo04cK851xEkLdTKuIfKeoIEM2";
+    public $resource_path;
+    public $data_key = '';
+    public $data_value = '';
+
+    public function setResourcePath($newval)
+    {
+        $this->resource_path = $newval;
+    }
+
+    public function setDataKey($newval)
+    {
+        $this->data_key = $newval;
+    }
+
+    public function setDataValue($newval)
+    {
+        $this->data_value = $newval;
+    }
+
+    public function getResourcePath()
+    {
+        return $this->resource_path;
+    }
+
+    public function runReport($param='GET', $type='count') {
+        $resource_path = "https://canvas.sfu.ca".$this->resource_path."?per_page=500";
+        $data = $this->data_key."=".$this->data_value; // need to account for multiples
+        $options = array(
+            'method' => "$param", // HTTP Request Type
+            'data' => $data, // Parameters
+            'headers' => array(	'Content-Type' => 'application/x-www-form-urlencoded',
+            "Authorization" => $this->token), // Access token
+        );
+
+        $raw = drupal_http_request ($resource_path,$options);
+        if ($raw->data) {
+            $json = $raw->data;
+            $count = sizeof(json_decode($json));
+        }
+
+        if ($type == 'count') {
+            return $count;
+        } else {
+            return json_decode($json);
+        }
+    } // this function
+} // this class
+
+class CanvasReport extends CanvasApi {
+
+    public $course_id;
+    public $term;
+    public $term_code;
+
+    public function setCourseId($newval) {
+        $this->course_id = $newval;
+    }
+
+    public function getCourseId() {
+        return $this->course_id;
+    }
+
+    public function setTerm($newval) { // ie Fall 2013
+        $this->term = $newval;
+    }
+
+    public function getTerm() {
+        return $this->term;
+    }
+
+    public function setTermCode($newval) { // ie Fall 2013
+        $this->term_code = $newval;
+    }
+
+    public function getTermCode() {
+        return $this->term_code;
+    }
+    // counts of course content
+    //
+    public function numStudents() {
+        $this->resource_path = "/api/v1/courses/".$this->course_id."/users";
+        $this->data_key = "enrollment_type";
+        $this->data_value = "student";
+        return $this->runReport();
+    }
+
+    public function numCourses() {
+        $this->resource_path = "/api/v1/accounts/12/courses";
+        $data = $this->runReport('GET', 'json');
+        $list = array();
+        foreach($data as $d) {
+            if (strpos($d->sis_course_id,$this->term_code) !== false) {
+                $list[$d->id] = $d->course_code;
+            }
+        }
+        return count($list);
+    }
+
+    public function numAssignments() {
+        $this->resource_path = "/api/v1/courses/".$this->course_id."/assignments";
+        return $this->runReport();
+    }
+
+    public function numExternalTools() {
+        $this->resource_path = "/api/v1/courses/".$this->course_id."/external_tools";
+        return $this->runReport();
+    }
+
+    public function numDiscussions() {
+        $this->resource_path = "/api/v1/courses/".$this->course_id."/discussion_topics";
+        return $this->runReport();
+    }
+
+    public function numQuizzes() {
+        $this->resource_path = "/api/v1/courses/".$this->course_id."/quizzes";
+        return $this->runReport();
+    }
+
+    public function getCourses() {
+        $this->resource_path = "/api/v1/accounts/12/courses";
+        $data = $this->runReport('GET', 'json');
+        $list = array();
+        foreach($data as $d) {
+            if (strpos($d->sis_course_id,$this->term_code) !== false) {
+                $list[$d->id] = $d->course_code;
+            }
+        }
+        return $list;
+    }
+}
+

@@ -1,0 +1,69 @@
+<?php
+/**
+ * Implements hook_permission().
+ */
+function course_page_permission() {
+    return array(
+        'access canvas courses' => array(
+            'title' => t('Access the Canvas reports'),
+        ),
+    );
+}
+
+function course_page_menu() {
+    $items['courses'] = array(
+        'title' => 'Courses',
+        'description' => 'List courses and report',
+        'page callback' => '_courses_table',
+        'page arguments' => array(1),
+        'access arguments' => array('access canvas courses'),
+    );
+    return $items;
+}
+
+function _courses_table($term = '1144') {
+    // $header = array('Course', 'Canvas ID', 'Term',
+    //  'Students', 'Assignments', 'Quizzes', 'Discussions');
+    $header = array(
+        array('data' => t('Course'), 'field' => 'course', 'sort' => 'asc'),
+        array('data' => t('Canvas ID'), 'field' => 'cid'),
+        array('data' => t('Term'), 'field' => 'term'),
+        array('data' => t('Students'), 'field' => 'students'),
+        array('data' => t('Assignments'), 'field' => 'assignments'),
+        array('data' => t('Quizzes'), 'field' => 'quizzes'),
+        array('data' => t('Discussions'), 'field' => 'discussions'),
+    );
+
+    // get the course array
+    $r = new CanvasReport;
+    $r->setTermCode("$term");
+    $courses = $r->getCourses();
+
+    foreach ($courses as $key => $value) {
+        // get students
+        $c = new CanvasReport;
+        $c->setCourseId("$key");
+        $students = $c->numStudents();
+        $assignments = $c->numAssignments();
+        $quizzes = $c->numQuizzes();
+        $discussions = $c->numDiscussions();
+
+        $rows[] = array(
+            $value,
+            $key,
+            $term,
+            $students,
+            $assignments,
+            $quizzes,
+            $discussions,
+        );
+    }
+    $output = theme('table', array('header' => $header,
+        'rows' => $rows ));
+
+    # add the pager
+    $output .= theme('pager');
+
+    return $output;
+}
+

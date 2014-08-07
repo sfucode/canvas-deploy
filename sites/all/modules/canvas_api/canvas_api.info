@@ -1,0 +1,3 @@
+name = Form and functions for interacting with Canvas API
+description = "Canvas API tools"
+core = 7.x
