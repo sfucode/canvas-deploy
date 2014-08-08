@@ -1,0 +1,114 @@
+<?php
+/**
+ * @file
+ * This module provides functions
+ *
+ */
+
+function _sync_courses() {
+    // need to delete all courses first
+    $r = new CanvasReport();
+    $r->setTermCode('1144');
+    $courses = $r->getCourses();
+
+    foreach($courses as $key => $value) {
+        _prepare_offering($key);
+    }
+
+}
+/**
+ *
+ */
+function _prepare_offering($cid) {
+    // string will look like ARCH100 C100 Ancient Peoples and Places
+    $r = new CanvasReport();
+    $r->setCourseId($cid);
+    $canvas_title = $r->getNameFromCid();
+    $vars = explode(" ", $canvas_title);
+    $courseIn = $vars[0];
+    $section = $vars[1];
+
+    // parse course code out with space
+    $courseSplit = preg_split('/(?=\d)/', $courseIn, 2);
+    $department = $courseSplit[0];
+    $courseCode = implode(' ', $courseSplit);
+
+    // get department tid or create term if it doesn't exist
+    $departmentTid = _get_tid_from_term_name($department);
+
+    $preterm = $r->getTermFromCid();
+    $termNid = _get_term($preterm);
+
+    $courseNid = _create_offering($courseCode, $section, $termNid, $departmentTid, $cid);
+
+    return;
+}
+
+function _create_offering($courseCode, $section, $termNid, $departmentTid, $canvasCode) {
+
+    // new Canvas Report
+    $r = new CanvasReport();
+    $r->setCourseId($canvasCode);
+
+    global $user;
+    $e = entity_create('node', array('type' => 'eval_course_offering'));
+    $e->uid = '1';
+    // Create a Entity Wrapper of that new Entity
+    $entity = entity_metadata_wrapper('node',$e);
+    $entity->title = 'Will be replaced';
+    $entity->field_eval_course_code = $courseCode;
+    $entity->field_eval_section = $section;
+    $entity->field_eval_department  = $departmentTid;
+    $entity->field_eval_term = $termNid;
+    $entity->field_eval_enrollment_count = $r->numStudents();
+    $entity->field_eval_canvas_id = $canvasCode;
+    $entity->field_assignments = $r->numAssignments();
+    $entity->field_quizzes = $r->numQuizzes();
+    $entity->field_discussions = $r->numDiscussions();
+
+    $entity->save();
+    $returnNid = $entity->getIdentifier();
+}
+
+/*
+ *
+ */
+function _get_term($termCode) {
+    $query = new EntityFieldQuery();
+    $query->entityCondition('entity_type', 'node')
+        ->entityCondition('bundle', 'eval_term')
+        ->propertyCondition('status', 1)
+        ->fieldCondition('field_eval_code', 'value', $termCode, '=')
+        ->addMetaData('account', user_load(1)); // Run the query as user 1.
+    $result = $query->execute();
+    if (isset($result['node'])) {
+        $nids = array_keys($result['node']);
+    }
+    return $nids[0];
+}
+
+function _get_termcode_from_tid($tid) {
+    $myNode = node_load($tid);
+    return $myNode->field_eval_code['und'][0]['value'];
+}
+
+/**
+ * Return the term id for a given term name.
+ */
+function _get_tid_from_term_name($term_name) {
+    $vocabulary = 'department';
+    $arr_terms = taxonomy_get_term_by_name($term_name, $vocabulary);
+    if (!empty($arr_terms)) {
+        $arr_terms = array_values($arr_terms);
+        $tid = $arr_terms[0]->tid;
+    }
+    else {
+        $vobj = taxonomy_vocabulary_machine_name_load($vocabulary);
+        $term = new stdClass();
+        $term->name = $term_name;
+        $term->vid = $vobj->vid;
+        taxonomy_term_save($term);
+        $tid = $term->tid;
+    }
+    return $tid;
+}

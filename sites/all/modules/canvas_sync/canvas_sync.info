@@ -1,0 +1,3 @@
+name = Synchronize Canvas content with Drupal ctypes
+description = "Synchronize Canvas with content"
+core = 7.x

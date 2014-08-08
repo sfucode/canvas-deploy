@@ -1,9 +1,4 @@
 <?php
-/**
- *  @file
- *  Provides the LibraryUpdater class.
- */
-
 class LibraryUpdater extends Updater implements DrupalUpdaterInterface {
   public function getInstallDirectory() {
      return DRUPAL_ROOT . "/sites/all/libraries";

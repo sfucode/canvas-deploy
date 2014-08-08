@@ -20,42 +20,34 @@ class SearchApiViewsHandlerArgumentTaxonomyTerm extends SearchApiViewsHandlerArg
       $this->fillValue();
     }
 
-    $outer_conjunction = strtoupper($this->operator);
-
     if (empty($this->options['not'])) {
       $operator = '=';
-      $inner_conjunction = 'OR';
+      $conjunction = 'OR';
     }
     else {
       $operator = '<>';
-      $inner_conjunction = 'AND';
+      $conjunction = 'AND';
     }
 
     if (!empty($this->value)) {
       $terms = entity_load('taxonomy_term', $this->value);
+      $vocabularies = taxonomy_vocabulary_get_names();
 
       if (!empty($terms)) {
-        $filter = $this->query->createFilter($outer_conjunction);
+        $filter = $this->query->createFilter($conjunction);
         $vocabulary_fields = $this->definition['vocabulary_fields'];
         $vocabulary_fields += array('' => array());
         foreach ($terms as $term) {
-          $inner_filter = $filter;
-          if ($outer_conjunction != $inner_conjunction) {
-            $inner_filter = $this->query->createFilter($inner_conjunction);
-          }
           // Set filters for all term reference fields which don't specify a
           // vocabulary, as well as for all fields specifying the term's
           // vocabulary.
           if (!empty($this->definition['vocabulary_fields'][$term->vocabulary_machine_name])) {
             foreach ($this->definition['vocabulary_fields'][$term->vocabulary_machine_name] as $field) {
-              $inner_filter->condition($field, $term->tid, $operator);
+              $filter->condition($field, $term->tid, $operator);
             }
           }
           foreach ($vocabulary_fields[''] as $field) {
-            $inner_filter->condition($field, $term->tid, $operator);
-          }
-          if ($outer_conjunction != $inner_conjunction) {
-            $filter->filter($inner_filter);
+            $filter->condition($field, $term->tid, $operator);
           }
         }
 

@@ -271,11 +271,9 @@ function manualcrop_field_widget_form_alter(&$element, &$form_state, $context) {
     if (manualcrop_supported_widgets($widget['type'])) {
       if ($widget['type'] == 'media_generic') {
         // We don't check if Manual Crop is enabled, this happens in the file
-        // entity edit form.
-        if (!_manualcrop_media_element_add_after_build($element)) {
-          foreach (element_children($element) as $key) {
-            _manualcrop_media_element_add_after_build($element[$key]);
-          }
+        // enntity edit form.
+        foreach (element_children($element) as $key) {
+          $element[$key]['#after_build'][] = 'manualcrop_media_element_process';
         }
 
         _manualcrop_attach_files();
@@ -316,7 +314,6 @@ function manualcrop_manualcrop_supported_widgets() {
     'image_image' => array('thumblist', 'inline_crop', 'instant_crop'),
     'image_miw' => array('thumblist', 'inline_crop', 'instant_crop'),
     'media_generic' => array('thumblist', 'inline_crop'),
-    'linkimagefield_widget' => array('thumblist', 'inline_crop', 'instant_crop'),
   );
 }
 

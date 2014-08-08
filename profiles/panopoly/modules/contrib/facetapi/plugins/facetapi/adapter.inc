@@ -778,8 +778,6 @@ abstract class FacetapiAdapter {
         'sort_weight' => array(),
         'sort_order' => array(),
         'empty_behavior' => 'none',
-        'facet_more_text' => 'Show more',
-        'facet_fewer_text' => 'Show fewer',
       );
 
       // Apply default sort info only if the configuration is "new".
@@ -855,9 +853,6 @@ abstract class FacetapiAdapter {
 
       // Apply the adapter's default settings.
       $this->settings[$name]->settings += $this->getDefaultSettings();
-
-      // Apply the URL processor's default settings.
-      $this->settings[$name]->settings += $this->getUrlProcessor()->getDefaultSettings();
 
       // Applies each dependency plugin's default settings.
       foreach ($facet['dependency plugins'] as $id) {

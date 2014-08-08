@@ -11,17 +11,49 @@ function course_page_permission() {
 }
 
 function course_page_menu() {
-    $items['courses'] = array(
-        'title' => 'Courses',
+    $items['courses/%/%'] = array(
+        'title' => 'Course information',
         'description' => 'List courses and report',
         'page callback' => '_courses_table',
-        'page arguments' => array(1),
-        'access arguments' => array('access canvas courses'),
+        'page arguments' => array(1,2),
+        'access arguments' => array('access content'),
+        'type' => MENU_CALLBACK,
+    );
+    $items['course'] = array(
+        'title' => 'Course information',
+        'description' => 'List courses and report',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('course_page_form'),
+        'access arguments' => array('access content'),
+        'type' => MENU_NORMAL_ITEM,
     );
     return $items;
 }
 
-function _courses_table($term = '1144') {
+function course_page_form($form, &$form_state) {
+    $c = new CanvasReport;
+    $c->setTermCode('1144');
+    $options = $c->getCourses();
+
+    $form['course'] = array(
+        '#type' => 'select',
+        '#title' => t('Course'),
+        '#options' => $options,
+        '#description' => t('Choose your course'),
+    );
+    $form['submit_button'] = array(
+        '#type' => 'submit',
+        '#value' => t('Submit'),
+    );
+    return $form;
+}
+
+function course_page_form_submit($form, &$form_state) {
+    $course = $form_state['values']['course'];
+    $form_state['redirect'] = 'courses/1144/' . $form_state['values']['course'];
+}
+
+function _courses_table($term='1144', $course='all') {
     // $header = array('Course', 'Canvas ID', 'Term',
     //  'Students', 'Assignments', 'Quizzes', 'Discussions');
     $header = array(
@@ -34,22 +66,27 @@ function _courses_table($term = '1144') {
         array('data' => t('Discussions'), 'field' => 'discussions'),
     );
 
-    // get the course array
-    $r = new CanvasReport;
-    $r->setTermCode("$term");
-    $courses = $r->getCourses();
+    if ($course !== 'all') {
+        $courses[$course] = 'course';
+    } else {
+        // get the course array
+        $r = new CanvasReport;
+        $r->setTermCode("$term");
+        $courses = $r->getCourses();
+    }
 
     foreach ($courses as $key => $value) {
         // get students
         $c = new CanvasReport;
         $c->setCourseId("$key");
+        $name = $c->getNamefromCid();
         $students = $c->numStudents();
         $assignments = $c->numAssignments();
         $quizzes = $c->numQuizzes();
         $discussions = $c->numDiscussions();
 
         $rows[] = array(
-            $value,
+            $name,
             $key,
             $term,
             $students,

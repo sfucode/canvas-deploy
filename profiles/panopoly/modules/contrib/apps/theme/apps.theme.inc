@@ -1,35 +1,30 @@
-<?php
-/**
- *  @file
- *  Provides theme functions for apps module.
- */
-
+<?PHP
 
 /**
- * Themes a list of apps.
+ * implement hook_preprocess_apps_list
  */
 function theme_apps_list($vars) {
   $items = array();
-  foreach ($vars['apps'] as $id => $app) {
+  foreach($vars['apps'] as $id=> $app) {
     if (!preg_match("/^#/", $id)) {
       $items[] = drupal_render($app);
     }
   }
-  return theme('item_list', array('items' => $items));
+  return theme('item_list', array('items'=>$items));
 }
 
 
 /**
- * Implements hook_preprocess_apps_app_teaser().
+ * implement hook_preprocess_apps_app_teaser
  */
 function apps_preprocess_apps_app_teaser(&$vars) {
   
   apps_include('pages');
   $link = apps_app_page_path($vars['app']);
   $vars['name'] = l($vars['app']['name'], $link);
-  if (!empty($vars['app']['logo'])) {
+  if(!empty($vars['app']['logo'])) {
     $vars['app']['logo']['style_name']= 'apps_logo';
-    $vars['logo'] = l(theme('image_style', $vars['app']['logo']), $link, array('html' => TRUE));
+    $vars['logo'] = l(theme('image_style', $vars['app']['logo']), $link, array('html'=>TRUE));
   }
   else {
     $vars['logo'] = FALSE;
@@ -53,25 +48,25 @@ function apps_preprocess_apps_app_teaser(&$vars) {
   }
   
   //action link
-  $vars['action'] = l(t('Details'), $link);
+  $vars['action'] = l('Details', $link);
 }
 
 /**
- * Implements hook_preprocess_apps_app_page().
+ * implement hook_preprocess_apps_app_page
  */
 function apps_preprocess_apps_app_page(&$vars) {
-  // First do everything we do in the teaser.
-  drupal_add_css(drupal_get_path('module', 'apps') . '/theme/css/apps.css');
+  //first do everything we do in the teaser
+  drupal_add_css(drupal_get_path('module', 'apps').'/theme/css/apps.css');
   apps_preprocess_apps_app_teaser($vars);
   
-  // We need some special stuff for the logo here.
-  if (!empty($vars['app']['logo']) && $vars['app']['logo']) {
+  //we need some special stuff for the logo here
+  if(!empty($vars['app']['logo']) && $vars['app']['logo']) {
     $vars['app']['logo']['style_name']= 'apps_logo_small';
     $vars['logo'] = theme('image_style', $vars['app']['logo']);
   }
    
     
-  if (isset($vars['app']['screenshots'][0])) {
+  if(isset($vars['app']['screenshots'][0])) {
     $vars['app']['screenshots'][0]['style_name'] = 'apps_screenshot';
     $vars['screenshot'] = theme('image_style', $vars['app']['screenshots'][0]);
   }
@@ -86,7 +81,7 @@ function apps_preprocess_apps_app_page(&$vars) {
   if ($vars['app']['status'] === APPS_INCOMPATIBLE) {
     $incompatible_deps = array();
     $incompatible_message = '';
-    foreach ($vars['app']['dependencies'] as $dep) {
+    foreach($vars['app']['dependencies'] as $dep) {
       if ($dep['status'] === APPS_INCOMPATIBLE) {
         $incompatible_deps[] = "{$dep['version']['name']} {$dep['version']['original_version']}";
       }
@@ -118,12 +113,12 @@ function apps_preprocess_apps_app_page(&$vars) {
 
 
 /**
- * Implements hook_preprocess_apps_app_featured().
+ * implement hook_preprocess_apps_app_featured
  */
 function apps_preprocess_apps_app_featured(&$vars) {
   //first do everything we do in the teaser
   apps_preprocess_apps_app_teaser($vars);
-  if ($vars['app']['screenshots'][0]) {
+  if($vars['app']['screenshots'][0]) {
     $vars['app']['screenshots'][0]['style_name'] = 'apps_featured_screenshot';
     $vars['screenshot'] = theme('image_style', $vars['app']['screenshots'][0]);
   }
@@ -135,30 +130,26 @@ function apps_preprocess_apps_app_featured(&$vars) {
 
   //action link
   $link = apps_app_page_path($vars['app']);
-  $vars['action'] = l(t('free'), $link);  //The text and link for the action button
+  $vars['action'] = l('free', $link);  //The text and link for the action button
 }
 
 /**
- * Implements hook_preprocess_apps_install_page().
+ * implement hook_preprocess_apps_install_page
  */
 function apps_preprocess_apps_install_page(&$vars) {
-  drupal_add_css(drupal_get_path('module', 'apps') . '/theme/css/apps.css');
+  drupal_add_css(drupal_get_path('module', 'apps').'/theme/css/apps.css');
   if (isset($vars['content']['featured_app'])) {
     $vars['content']['featured_app']['#theme'] = 'apps_app_featured';
   }
 }
 
 /**
- * Implements hook_preprocess_apps_manage_page().
+ * implement hook_preprocess_apps_manage_page
  */
 function apps_preprocess_apps_manage_page(&$vars) {
-  drupal_add_css(drupal_get_path('module', 'apps') . '/theme/css/apps.css');
+  drupal_add_css(drupal_get_path('module', 'apps').'/theme/css/apps.css');
 }
 
-
-/**
- * Implements hook_preprocess_apps_update_page().
- */
 function apps_preprocess_apps_update_page(&$vars) {
-  drupal_add_css(drupal_get_path('module', 'apps') . '/theme/css/apps.css');
+  drupal_add_css(drupal_get_path('module', 'apps').'/theme/css/apps.css');
 }

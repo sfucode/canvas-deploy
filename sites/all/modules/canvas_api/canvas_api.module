@@ -34,6 +34,7 @@ class CanvasApi {
 
     public function runReport($param='GET', $type='count') {
         $resource_path = "https://canvas.sfu.ca".$this->resource_path."?per_page=500";
+        $data = '';
         $data = $this->data_key."=".$this->data_value; // need to account for multiples
         $options = array(
             'method' => "$param", // HTTP Request Type
@@ -85,6 +86,27 @@ class CanvasReport extends CanvasApi {
     public function getTermCode() {
         return $this->term_code;
     }
+
+    public function getNameFromCid() {
+        $this->resource_path = "/api/v1/courses/".$this->course_id;
+        $long_name = $this->runReport('GET', 'json');
+        $vars = explode(" ", $long_name->name);
+        $courseIn = $vars[0];
+        $section = $vars[1];
+        // parse course code out with space
+        $courseSplit = preg_split('/(?=\d)/', $courseIn, 2);
+        $department = $courseSplit[0];
+        $courseCode = implode(' ', $courseSplit);
+
+        return $courseCode." ".$section;
+    }
+
+    public function getTermFromCid() {
+        $this->resource_path = "/api/v1/courses/".$this->course_id;
+        $course = $this->runReport('GET', 'json');
+        return substr($course->sis_course_id, 0, 4);
+    }
+
     // counts of course content
     //
     public function numStudents() {
@@ -136,6 +158,10 @@ class CanvasReport extends CanvasApi {
             }
         }
         return $list;
+    }
+
+    public function getTermCodeFromCid() {
+
     }
 }
 

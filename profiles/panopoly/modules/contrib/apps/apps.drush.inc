@@ -2,11 +2,16 @@
 
 /**
  * @file
- * Apps module drush integration.
+ *   Features module drush integration.
  */
 
 /**
  * Implements hook_drush_command().
+ * 
+ * @See drush_parse_command() for a list of recognized keys.
+ *
+ * @return
+ *   An associative array describing your command(s).
  */
 function apps_drush_command() {
   $items = array();
@@ -42,13 +47,10 @@ function apps_drush_help($section) {
   switch ($section) {
     case 'drush:apps-server-list':
       return dt("List all the servers that provide apps for your site.");
-
     case 'drush:apps-list':
       return dt("List all the available apps for your site.");
-
     case 'drush:apps-install':
       return dt("Install an App to your site.");
-
   }
 }
 
@@ -76,36 +78,17 @@ function drush_apps_server_list() {
 function drush_apps_list() {
   $servers = func_get_args();
   module_load_include('inc', 'apps', 'apps.manifest');
-  $servers = !empty($servers) ? $servers : array_keys(apps_servers());
-  $rows = array(
-    array(
-      dt('Key'),
-      dt('Name'),
-      dt('version'),
-      dt('server'),
-      dt('status'),
-    ),
-  );
+  $servers = !empty($servers)? $servers : array_keys(apps_servers());
+  $rows = array(array(dt('Key'), dt('Name'), dt('version'), dt('server'), dt('status')));
   foreach ($servers as $server) {
     $apps = apps_apps($server);
     foreach ($apps as $k => $app) {
       $status = '';
       switch ($app['status']) {
-        case APPS_INCOMPATIBLE:
-          $status = 'Incompatible';
-          break;
-
-        case APPS_DISABLED:
-          $status = 'Disabled';
-          break;
-
-        case APPS_ENABLED:
-          $status = 'Enabled';
-          break;
-
-        case APPS_INSTALLABLE:
-          $status = 'Installable';
-          break;
+        CASE APPS_INCOMPATIBLE : $status = 'Incompatible'; break;
+        CASE APPS_DISABLED : $status = 'Disabled'; break;
+        CASE APPS_ENABLED : $status = 'Enabled'; break;
+        CASE APPS_INSTALLABLE : $status = 'Installable'; break;
       }
       $rows[] = array(
         $k,
@@ -147,8 +130,8 @@ function drush_apps_install() {
   $apps = func_get_args();
   $installable = drush_apps_installable_apps();
   $to_install = array();
-
-  // Verify that all apps are installable,
+  
+  // verify that all apps are installable
   foreach ($apps as $app) {
     if (array_key_exists($app, $installable)) {
       $to_install[$app] = $installable[$app];
@@ -157,8 +140,8 @@ function drush_apps_install() {
       drush_log(dt('App @app is not available for installation', array('@app' => $app)), 'error');
     }
   }
-
-  // If we have no installable apps, list all apps that are installable.
+  
+  //if we have no installable apps, list all apps that are installable
   if (empty($to_install)) {
     $type = drush_choice($installable, 'Enter a number to choose which App to install.', '!key');
     if ($type === FALSE) {
@@ -167,7 +150,7 @@ function drush_apps_install() {
     $to_install[$type] = $installable[$type];
   }
 
-  // For each app we want to download its dependencies and itself.
+  // foreach app we want to download its dependencies and itself
   foreach ($to_install as $app => $server) {
     drush_print(dt('Install @app for server @server', array('@app' => $app, '@server' => $server)));
     $downloadables = apps_download_apps_list(apps_app_load($server, $app));
@@ -180,9 +163,9 @@ function drush_apps_install() {
         return;
       };
     }
-    // As there are now new modules, we have to reset the module data static
-    // cache.
+    //As there are now new modules, we have to reset the module data static cache
     drupal_static_reset('system_rebuild_module_data');
     drush_invoke('pm-enable', $app);
   }
 }
+

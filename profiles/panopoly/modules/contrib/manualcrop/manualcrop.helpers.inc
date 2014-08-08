@@ -266,24 +266,6 @@ function manualcrop_croptool_process(&$form, &$form_state, &$element, $file, $se
 }
 
 /**
- * Adds the #after_build entry to a media element.
- *
- * @param $element
- *   The element to alter.
- *
- * @return
- *   TRUE if the element was altered, FALSE otherwise.
- */
-function _manualcrop_media_element_add_after_build(&$element) {
-  if (isset($element['#media_options']['global'])) {
-    $element['#after_build'][] = 'manualcrop_media_element_process';
-    return TRUE;
-  }
-
-  return FALSE;
-}
-
-/**
  * Get the unique javascript crop settings identifier.
  *
  * @param $data
@@ -323,6 +305,7 @@ function _manualcrop_attach_dependencies(&$element, $form_state, $js_identifier,
   _manualcrop_attach_files($element);
 
   if (!isset($added[$js_identifier]) || $added[$js_identifier] != $form_state['rebuild']) {
+    $first = empty($added);
     $added[$js_identifier] = $form_state['rebuild'];
 
     // Generate image style settings.
@@ -342,7 +325,7 @@ function _manualcrop_attach_dependencies(&$element, $form_state, $js_identifier,
     $element['#attached']['js'][] = array(
       'data' => array(
         'manualcrop' => array(
-          'styles' => $styles,
+          'styles' => $first ? $styles : array(),
           'elements' => array(
             $js_identifier => array(
               'keyboard' => !empty($settings['manualcrop_keyboard']),
@@ -566,11 +549,10 @@ function _manualcrop_add_croptool(&$element, $value, &$form_state, $fid, $js_ide
  *   and field_name.
  */
 function _manualcrop_process_file_entity_form(&$form, &$form_state, $instance_info) {
-  // Get the FIle Entity widget settings.
-  $settings = variable_get('manualcrop_file_entity_settings_' . $form['#entity']->type, manualcrop_default_widget_settings());
-
-  // Try to get the field instance settings.
+  // Get the field instance settings.
+  $settings = array();
   if (!empty($instance_info['entity_type']) && !empty($instance_info['bundle']) && !empty($instance_info['field_name'])) {
+    // Get the field instance.
     $instance = field_info_instance($instance_info['entity_type'], $instance_info['field_name'], $instance_info['bundle']);
 
     if (!empty($instance)) {
@@ -582,6 +564,10 @@ function _manualcrop_process_file_entity_form(&$form, &$form_state, $instance_in
         return;
       }
     }
+  }
+  else {
+    // Get the widget settings for the file entity.
+    $settings = variable_get('manualcrop_file_entity_settings_' . $form['#entity']->type, manualcrop_default_widget_settings());
   }
 
   // Add the croptool.

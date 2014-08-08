@@ -11,9 +11,10 @@ files[] = apps.updater.inc
 files[] = apps.installer.inc
 files[] = apps.test
 
-; Information added by Drupal.org packaging script on 2014-06-27
-version = "7.x-1.0-beta8"
+
+; Information added by drush on 2014-08-06
+version = "7.x-1.0-beta7+15-dev"
 core = "7.x"
 project = "apps"
-datestamp = "1403891628"
+datestamp = "1407363302"
 

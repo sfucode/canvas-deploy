@@ -1,0 +1,10 @@
+<?php
+/**
+ * @file
+ * This module syncs Canvas API with
+ * Drupal ctypes
+ *
+ * abandoned for custom functions
+ * now just here for drush action
+ */
+

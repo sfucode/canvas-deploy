@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Term and course offering content feature.
+ */
+
+include_once 'term_and_course_offering_content.features.inc';
