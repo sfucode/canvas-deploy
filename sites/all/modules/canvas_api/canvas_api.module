@@ -35,7 +35,9 @@ class CanvasApi {
     public function runReport($param='GET', $type='count') {
         $resource_path = "https://canvas.sfu.ca".$this->resource_path."?per_page=500";
         $data = '';
-        $data = $this->data_key."=".$this->data_value; // need to account for multiples
+        if ($this->data_key !== '') {
+            $data = $this->data_key."=".$this->data_value; // need to account for multiples
+        }
         $options = array(
             'method' => "$param", // HTTP Request Type
             'data' => $data, // Parameters
@@ -79,7 +81,7 @@ class CanvasReport extends CanvasApi {
         return $this->term;
     }
 
-    public function setTermCode($newval) { // ie Fall 2013
+    public function setTermCode($newval) { // ie 1144
         $this->term_code = $newval;
     }
 
