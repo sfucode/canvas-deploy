@@ -130,7 +130,7 @@ class CanvasReport extends CanvasApi {
             }
         }
         return count($list);
-        *?
+        */
     }
 
     public function numAssignments() {
