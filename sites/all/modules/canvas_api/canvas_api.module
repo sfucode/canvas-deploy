@@ -120,7 +120,9 @@ class CanvasReport extends CanvasApi {
 
     public function numCourses() {
         $this->resource_path = "/api/v1/accounts/12/courses";
-        $data = $this->runReport('GET', 'json');
+        $data = $this->runReport('GET', 'count');
+        return $data;
+        /*
         $list = array();
         foreach($data as $d) {
             if (strpos($d->sis_course_id,$this->term_code) !== false) {
@@ -128,6 +130,7 @@ class CanvasReport extends CanvasApi {
             }
         }
         return count($list);
+        *?
     }
 
     public function numAssignments() {
