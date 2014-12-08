@@ -153,7 +153,8 @@ class CanvasReport extends CanvasApi {
     }
 
     public function getCourses() {
-        $this->resource_path = "/api/v1/accounts/12/courses";
+        // $this->resource_path = "/api/v1/accounts/12/courses";
+        $this->resource_path = "/api/v1/courses";
         $myData = $this->runReport('GET', 'json');
         $list = array();
         foreach($myData as $d) {
