@@ -154,13 +154,15 @@ class CanvasReport extends CanvasApi {
     public function getCourses() {
         $this->resource_path = "/api/v1/accounts/12/courses";
         $myData = $this->runReport('GET', 'json');
+        /*
         $list = array();
         foreach($myData as $d) {
             if (strpos($d->sis_course_id,$this->term_code) !== false) {
                 $list[$d->id] = $d->course_code;
             }
         }
-        // return $list;
+        return $list;
+         */
         return $myData;
     }
 
