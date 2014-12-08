@@ -152,7 +152,6 @@ class CanvasReport extends CanvasApi {
     }
 
     public function getCourses() {
-/*
         $this->resource_path = "/api/v1/accounts/12/courses";
         $myData = $this->runReport('GET', 'json');
         $list = array();
@@ -162,8 +161,6 @@ class CanvasReport extends CanvasApi {
             }
         }
         return $list;
- */
-        return 'adam';
     }
 
     public function getTermCodeFromCid() {
