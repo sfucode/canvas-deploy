@@ -33,8 +33,8 @@ class CanvasApi {
     }
 
     public function runReport($param='GET', $type='count') {
-        // $resource_path = "https://canvas.sfu.ca".$this->resource_path."?per_page=500";
-        $resource_path = "https://canvas.sfu.ca".$this->resource_path;
+        $resource_path = "https://canvas.sfu.ca".$this->resource_path."?per_page=500";
+        // $resource_path = "https://canvas.sfu.ca".$this->resource_path;
         $data = '';
         if ($this->data_key !== '') {
             $data = $this->data_key."=".$this->data_value; // need to account for multiples
