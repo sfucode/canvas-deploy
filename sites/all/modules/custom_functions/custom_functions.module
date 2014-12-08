@@ -8,7 +8,7 @@
 function _sync_courses() {
     // need to delete all courses first
     $r = new CanvasReport();
-    $r->setTermCode('1151');
+    $r->setTermCode('1147');
     $courses = $r->getCourses();
 
     foreach($courses as $key => $value) {
