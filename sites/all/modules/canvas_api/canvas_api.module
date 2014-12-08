@@ -152,9 +152,9 @@ class CanvasReport extends CanvasApi {
     }
 
     public function getCourses() {
+/*
         $this->resource_path = "/api/v1/accounts/12/courses";
         $myData = $this->runReport('GET', 'json');
-        /*
         $list = array();
         foreach($myData as $d) {
             if (strpos($d->sis_course_id,$this->term_code) !== false) {
@@ -162,8 +162,8 @@ class CanvasReport extends CanvasApi {
             }
         }
         return $list;
-         */
-        return $myData;
+ */
+        return 'adam';
     }
 
     public function getTermCodeFromCid() {
