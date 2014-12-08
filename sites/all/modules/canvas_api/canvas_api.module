@@ -7,7 +7,8 @@
  */
 class CanvasApi {
     public $count = 0;
-    public $token = "Bearer 9024KpNNmC5KaJAl1Kn00bmNGR17uucFVdlEfWHo04cK851xEkLdTKuIfKeoIEM2";
+    // public $token = "Bearer 9024KpNNmC5KaJAl1Kn00bmNGR17uucFVdlEfWHo04cK851xEkLdTKuIfKeoIEM2";
+    public $token = "Bearer NLTJontRQ5GHMxOnnbvH1b0UADCXDdeVTEKqv3jdCLRgZOijGkYqcX8kK3YWEt9k";
     public $resource_path;
     public $data_key = '';
     public $data_value = '';
