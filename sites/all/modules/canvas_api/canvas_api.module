@@ -8,12 +8,13 @@
 class CanvasApi {
     public $count = 0;
     // public $token = "Bearer 9024KpNNmC5KaJAl1Kn00bmNGR17uucFVdlEfWHo04cK851xEkLdTKuIfKeoIEM2";
-    public $token = "Bearer NLTJontRQ5GHMxOnnbvH1b0UADCXDdeVTEKqv3jdCLRgZOijGkYqcX8kK3YWEt9k";
+    // public $token = "Bearer NLTJontRQ5GHMxOnnbvH1b0UADCXDdeVTEKqv3jdCLRgZOijGkYqcX8kK3YWEt9k";
+    public $token = "Bearer 2jxNJRvwLidoZQKz8rcbtXZwiKoXn86meNEy27Bi7tc1UtbhHiye7vJPoGuLRZmX";
     public $resource_path;
     public $data_key = '';
     public $data_value = '';
 
-    public function setResourcePath($newval)
+    public function setResourcePath($newval) // ie /api/v1/courses
     {
         $this->resource_path = $newval;
     }
@@ -34,7 +35,8 @@ class CanvasApi {
     }
 
     public function runReport($param='GET', $type='count') {
-        $resource_path = "https://canvas.sfu.ca".$this->resource_path."?per_page=500";
+        $myResource = "https://canvas.sfu.ca".$this->resource_path."?per_page=125"; // can handle 125
+        // $resource_path = "https://canvas.sfu.ca".$this->resource_path."?per_page=500";
         // $resource_path = "https://canvas.sfu.ca".$this->resource_path;
         $data = '';
         if ($this->data_key !== '') {
@@ -43,11 +45,12 @@ class CanvasApi {
         $options = array(
             'method' => "$param", // HTTP Request Type
             'data' => $data, // Parameters
+	    'timeout' => 600,
             'headers' => array(	'Content-Type' => 'application/x-www-form-urlencoded',
             "Authorization" => $this->token), // Access token
         );
 
-        $raw = drupal_http_request ($resource_path,$options);
+        $raw = drupal_http_request ($myResource,$options);
         if ($raw->data) {
             $json = $raw->data;
             $count = sizeof(json_decode($json));
@@ -153,16 +156,18 @@ class CanvasReport extends CanvasApi {
     }
 
     public function getCourses() {
-        // $this->resource_path = "/api/v1/accounts/12/courses";
-        $this->resource_path = "/api/v1/courses";
+        $this->resource_path = "/api/v1/accounts/12/courses";
+        // $this->resource_path = "/api/v1/accounts";
+        // $this->resource_path = "/api/v1/courses";
         $myData = $this->runReport('GET', 'json');
         $list = array();
         foreach($myData as $d) {
-            if (strpos($d->sis_course_id,$this->term_code) !== false) {
+            if (strpos($d->sis_course_id, $this->term_code) !== false) {
                 $list[$d->id] = $d->course_code;
             }
         }
-        return $list;
+       return $list;
+       // return $myData;
     }
 
     public function getTermCodeFromCid() {
