@@ -1,14 +1,13 @@
 <?php
 /**
  * @file
- * This module provides functions and a UI for
+ * This module provides classes and functions
  * interacting with Canvas
+ * Adam Young 2014
  *
  */
 class CanvasApi {
     public $count = 0;
-    // public $token = "Bearer 9024KpNNmC5KaJAl1Kn00bmNGR17uucFVdlEfWHo04cK851xEkLdTKuIfKeoIEM2";
-    // public $token = "Bearer NLTJontRQ5GHMxOnnbvH1b0UADCXDdeVTEKqv3jdCLRgZOijGkYqcX8kK3YWEt9k";
     public $token = "Bearer 2jxNJRvwLidoZQKz8rcbtXZwiKoXn86meNEy27Bi7tc1UtbhHiye7vJPoGuLRZmX";
     public $resource_path;
     public $data_key = '';
@@ -19,14 +18,14 @@ class CanvasApi {
         $this->resource_path = $newval;
     }
 
-    public function setDataKey($newval)
+    public function setParameter($newval)
     {
-        $this->data_key = $newval;
+        $this->parameter = $newval;
     }
 
-    public function setDataValue($newval)
+    public function getParameter()
     {
-        $this->data_value = $newval;
+        return $this->parameter;
     }
 
     public function getResourcePath()
@@ -45,20 +44,16 @@ class CanvasApi {
     }
 
     public function runReport($param='GET', $type='count') {
-	if ($this->page && $this->per_page) {
-        $myResource = "https://canvas.sfu.ca".$this->resource_path."?per_page=".$this->per_page."&page=".$this->page; // can handle 125
+	if (isset($this->page, $this->per_page)) {
+        $myResource = "https://canvas.sfu.ca".$this->resource_path."?per_page=".$this->per_page."&page=".$this->page;
 	} else {
         $myResource = "https://canvas.sfu.ca".$this->resource_path;
 	}
-        // $resource_path = "https://canvas.sfu.ca".$this->resource_path."?per_page=500";
-        // $resource_path = "https://canvas.sfu.ca".$this->resource_path;
-        $data = '';
-        if ($this->data_key !== '') {
-            $data = $this->data_key."=".$this->data_value; // need to account for multiples
-        }
+        $data = $this->parameter;
         $options = array(
             'method' => "$param", // HTTP Request Type
             'data' => $data, // Parameters
+            // 'data' => 'enrollment_term_id=30',
 	    'timeout' => 600,
             'headers' => array(	'Content-Type' => 'application/x-www-form-urlencoded',
             "Authorization" => $this->token), // Access token
@@ -169,19 +164,24 @@ class CanvasReport extends CanvasApi {
         return $this->runReport();
     }
 
-    public function getCourses() {
+    public function getCourses() { // need to loop through each and filter out term
         $this->resource_path = "/api/v1/accounts/12/courses";
-        // $this->resource_path = "/api/v1/accounts";
-        // $this->resource_path = "/api/v1/courses";
-        $myData = $this->runReport('GET', 'json');
-        $list = array();
-        foreach($myData as $d) {
-            if (strpos($d->sis_course_id, $this->term_code) !== false) {
-                $list[$d->id] = $d->course_code;
-            }
-        }
-       return $list;
-       // return $myData;
+	$this->per_page = '20';
+	$this->setDataKey = 'enrollment_term_id';
+	$this->setDataValue = $this->term_code; // note this is canvas term code
+
+	// loop
+	$list = array();
+	for ($x = 1; $x <= 44; $x++) {
+		$this->page = $x;
+		$myData = $this->runReport('GET', 'json');
+		foreach($myData as $d) {
+			$list[$d->id] = $d->course_code;
+		}
+	}
+	// end loop
+
+	return $list;
     }
 
     public function getTermCodeFromCid() {
