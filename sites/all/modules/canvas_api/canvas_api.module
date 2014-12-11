@@ -34,8 +34,22 @@ class CanvasApi {
         return $this->resource_path;
     }
 
+    public function setPerPage($newval)
+    {
+        $this->per_page = $newval;
+    }
+
+    public function setPage($newval)
+    {
+        $this->page = $newval;
+    }
+
     public function runReport($param='GET', $type='count') {
-        $myResource = "https://canvas.sfu.ca".$this->resource_path."?per_page=125"; // can handle 125
+	if ($this->page && $this->per_page) {
+        $myResource = "https://canvas.sfu.ca".$this->resource_path."?per_page=".$this->per_page."&page=".$this->page; // can handle 125
+	} else {
+        $myResource = "https://canvas.sfu.ca".$this->resource_path;
+	}
         // $resource_path = "https://canvas.sfu.ca".$this->resource_path."?per_page=500";
         // $resource_path = "https://canvas.sfu.ca".$this->resource_path;
         $data = '';
