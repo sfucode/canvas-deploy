@@ -67,9 +67,14 @@ class CanvasApi {
 
         if ($type == 'count') {
             return $count;
-        } else {
+        } elseif($type == 'json') {
             return json_decode($json);
-        }
+	} elseif($type == 'pages') {
+		// return $raw->headers['link'];
+		$pages = array();
+		preg_match_all("/\?page=(.*?)\&/", $raw->headers['link'], $pages);
+		return $pages[1][3];
+	}
     } // this function
 } // this class
 
@@ -167,12 +172,14 @@ class CanvasReport extends CanvasApi {
     public function getCourses() { // need to loop through each and filter out term
         $this->resource_path = "/api/v1/accounts/12/courses";
 	$this->per_page = '20';
-	$this->setDataKey = 'enrollment_term_id';
-	$this->setDataValue = $this->term_code; // note this is canvas term code
+	$this->page = 1;
+	$this->parameter = 'enrollment_term_id=30';
 
-	// loop
+	// get number of pages to cycle through
+	$count = $this->runReport('GET', 'pages');
+
 	$list = array();
-	for ($x = 1; $x <= 44; $x++) {
+	for ($x = 1; $x <= $count; $x++) {
 		$this->page = $x;
 		$myData = $this->runReport('GET', 'json');
 		foreach($myData as $d) {
