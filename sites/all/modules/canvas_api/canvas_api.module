@@ -132,40 +132,46 @@ class CanvasReport extends CanvasApi {
     //
     public function numStudents() {
         $this->resource_path = "/api/v1/courses/".$this->course_id."/users";
-        $this->data_key = "enrollment_type";
-        $this->data_value = "student";
+	$this->parameter = 'enrollment_type=student';
+	$this->per_page = '150';
+	$this->page = '1';
         return $this->runReport();
     }
 
     public function numCourses() {
         $this->resource_path = "/api/v1/accounts/12/courses";
+	$this->parameter = 'enrollment_term_id='.$this->term_code;
+	$this->per_page = '500';
+	$this->page = '1';
         $data = $this->runReport('GET', 'count');
-        $list = array();
-        foreach($data as $d) {
-            if (strpos($d->sis_course_id,$this->term_code) !== false) {
-                $list[$d->id] = $d->course_code;
-            }
-        }
-        return count($list);
+	return $data;
     }
 
     public function numAssignments() {
         $this->resource_path = "/api/v1/courses/".$this->course_id."/assignments";
+	$this->per_page = '500';
+	$this->page = '1';
         return $this->runReport();
     }
 
     public function numExternalTools() {
         $this->resource_path = "/api/v1/courses/".$this->course_id."/external_tools";
+	$this->per_page = '500';
+	$this->page = '1';
         return $this->runReport();
     }
 
     public function numDiscussions() {
         $this->resource_path = "/api/v1/courses/".$this->course_id."/discussion_topics";
+	$this->per_page = '500';
+	$this->page = '1';
         return $this->runReport();
     }
 
     public function numQuizzes() {
         $this->resource_path = "/api/v1/courses/".$this->course_id."/quizzes";
+	$this->per_page = '500';
+	$this->page = '1';
         return $this->runReport();
     }
 
@@ -173,7 +179,7 @@ class CanvasReport extends CanvasApi {
         $this->resource_path = "/api/v1/accounts/12/courses";
 	$this->per_page = '20';
 	$this->page = 1;
-	$this->parameter = 'enrollment_term_id=30';
+	$this->parameter = 'enrollment_term_id='.$this->term_code;
 
 	// get number of pages to cycle through
 	$count = $this->runReport('GET', 'pages');
@@ -191,8 +197,5 @@ class CanvasReport extends CanvasApi {
 	return $list;
     }
 
-    public function getTermCodeFromCid() {
-
-    }
 }
 
