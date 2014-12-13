@@ -21,18 +21,13 @@ function _sync_courses($term) {
  *
  */
 function _prepare_offering($cid) {
-    // string will look like ARCH100 C100 Ancient Peoples and Places
     $r = new CanvasReport();
     $r->setCourseId($cid);
     $canvas_title = $r->getNameFromCid();
     $vars = explode(" ", $canvas_title);
-    $courseIn = $vars[0];
-    $section = $vars[1];
-
-    // parse course code out with space
-    $courseSplit = preg_split('/(?=\d)/', $courseIn, 2);
-    $department = $courseSplit[0];
-    $courseCode = implode(' ', $courseSplit);
+    $department = $vars[0];
+    $courseCode = $vars[0]." ".$vars[1];
+    $section = $vars[2];
 
     // get department tid or create term if it doesn't exist
     $departmentTid = _get_tid_from_term_name($department);
