@@ -5,104 +5,162 @@
  *
  */
 
-function _sync_courses($term) {
+function _sync_courses($term) { // 1147
+	// also need to convert '1147' format to Canvas term id
+	$term_nid = _get_tid_from_termcode($term);
+	$myTerm = node_load($term_nid);
+	$canvasTerm = $myTerm->field_canvas_term_id['und'][0]['value'];
 	// TODO need to check for CID first in order to figure out 
 	// whether to update or create
-    $r = new CanvasReport();
-    $r->setTermCode($term);
-    $courses = $r->getCourses();
+	$r = new CanvasReport();
+	$r->setTermCode($canvasTerm);
+	$courses = $r->getCourses();
 
-    foreach($courses as $key => $value) {
-        _prepare_offering($key);
-    }
+	// TODO get array of all CIDS in system
+	// new routine of CID is in both arrays
+
+	foreach($courses as $key => $value) {
+		_prepare_offering($key);
+	}
 
 }
 /**
  *
  */
 function _prepare_offering($cid) {
-    $r = new CanvasReport();
-    $r->setCourseId($cid);
-    $canvas_title = $r->getNameFromCid();
-    $vars = explode(" ", $canvas_title);
-    $department = $vars[0];
-    $courseCode = $vars[0]." ".$vars[1];
-    $section = $vars[2];
+	$r = new CanvasReport();
+	$r->setCourseId($cid);
+	$canvas_title = $r->getNameFromCid();
+	$vars = explode(" ", $canvas_title);
+	$department = $vars[0];
+	$courseCode = $vars[0]." ".$vars[1];
+	$section = $vars[2];
 
-    // get department tid or create term if it doesn't exist
-    $departmentTid = _get_tid_from_term_name($department);
+	// get department tid or create term if it doesn't exist
+	$departmentTid = _get_tid_from_term_name($department);
 
-    $preterm = $r->getTermFromCid();
-    $termNid = _get_term($preterm);
+	$preterm = $r->getTermFromCid();
+	$termNid = _get_term($preterm);
 
-    $courseNid = _create_offering($courseCode, $section, $termNid, $departmentTid, $cid);
+	$courseNid = _create_offering($courseCode, $section, $termNid, $departmentTid, $cid);
 
-    return;
+	return;
 }
 
 function _create_offering($courseCode, $section, $termNid, $departmentTid, $canvasCode) {
-    $r = new CanvasReport();
-    $r->setCourseId($canvasCode);
+	$r = new CanvasReport();
+	$r->setCourseId($canvasCode);
 
-    global $user;
-    $e = entity_create('node', array('type' => 'eval_course_offering'));
-    $e->uid = '1';
-    // Create an entity wrapper for the new entity
-    $entity = entity_metadata_wrapper('node',$e);
-    $entity->title = 'Will be replaced';
-    $entity->field_eval_course_code = $courseCode;
-    $entity->field_eval_section = $section;
-    $entity->field_eval_department  = $departmentTid;
-    $entity->field_eval_term = $termNid;
-    $entity->field_eval_enrollment_count = $r->numStudents();
-    $entity->field_eval_canvas_id = $canvasCode;
-    $entity->field_assignments = $r->numAssignments();
-    $entity->field_quizzes = $r->numQuizzes();
-    $entity->field_discussions = $r->numDiscussions();
+	global $user;
+	$e = entity_create('node', array('type' => 'eval_course_offering'));
+	$e->uid = '1';
+	// Create an entity wrapper for the new entity
+	$entity = entity_metadata_wrapper('node',$e);
+	$entity->title = 'Will be replaced';
+	$entity->field_eval_course_code = $courseCode;
+	$entity->field_eval_section = $section;
+	$entity->field_eval_department  = $departmentTid;
+	$entity->field_eval_term = $termNid;
+	$entity->field_eval_enrollment_count = $r->numStudents();
+	$entity->field_eval_canvas_id = $canvasCode;
+	$entity->field_assignments = $r->numAssignments();
+	$entity->field_quizzes = $r->numQuizzes();
+	$entity->field_discussions = $r->numDiscussions();
 
-    $entity->save();
-    $returnNid = $entity->getIdentifier();
+	$entity->save();
+	$returnNid = $entity->getIdentifier();
 }
 
 /*
  *
  */
 function _get_term($termCode) {
-    $query = new EntityFieldQuery();
-    $query->entityCondition('entity_type', 'node')
-        ->entityCondition('bundle', 'eval_term')
-        ->propertyCondition('status', 1)
-        ->fieldCondition('field_eval_code', 'value', $termCode, '=')
-        ->addMetaData('account', user_load(1)); // Run the query as user 1.
-    $result = $query->execute();
-    if (isset($result['node'])) {
-        $nids = array_keys($result['node']);
-    }
-    return $nids[0];
+	$query = new EntityFieldQuery();
+	$query->entityCondition('entity_type', 'node')
+		->entityCondition('bundle', 'eval_term')
+		->propertyCondition('status', 1)
+		->fieldCondition('field_eval_code', 'value', $termCode, '=')
+		->addMetaData('account', user_load(1)); // Run the query as user 1.
+	$result = $query->execute();
+	if (isset($result['node'])) {
+		$nids = array_keys($result['node']);
+	}
+	return $nids[0];
 }
 
 function _get_termcode_from_tid($tid) {
-    $myNode = node_load($tid);
-    return $myNode->field_eval_code['und'][0]['value'];
+	$myNode = node_load($tid);
+	return $myNode->field_eval_code['und'][0]['value'];
 }
 
+function _get_tid_from_termcode($termcode) { // ie 1147
+	$query = new EntityFieldQuery();
+	$query->entityCondition('entity_type', 'node')
+		->entityCondition('bundle', 'eval_term')
+		->propertyCondition('status', 1)
+		->fieldCondition('field_eval_code', 'value', $termcode, '=');
+	$result = $query->execute();
+	$nids = array_keys($result['node']);
+	return $nids[0];
+}
 /**
  * Return the term id for a given term name.
  */
 function _get_tid_from_term_name($term_name) {
-    $vocabulary = 'department';
-    $arr_terms = taxonomy_get_term_by_name($term_name, $vocabulary);
-    if (!empty($arr_terms)) {
-        $arr_terms = array_values($arr_terms);
-        $tid = $arr_terms[0]->tid;
-    }
-    else {
-        $vobj = taxonomy_vocabulary_machine_name_load($vocabulary);
-        $term = new stdClass();
-        $term->name = $term_name;
-        $term->vid = $vobj->vid;
-        taxonomy_term_save($term);
-        $tid = $term->tid;
-    }
-    return $tid;
+	$vocabulary = 'department';
+	$arr_terms = taxonomy_get_term_by_name($term_name, $vocabulary);
+	if (!empty($arr_terms)) {
+		$arr_terms = array_values($arr_terms);
+		$tid = $arr_terms[0]->tid;
+	}
+	else {
+		$vobj = taxonomy_vocabulary_machine_name_load($vocabulary);
+		$term = new stdClass();
+		$term->name = $term_name;
+		$term->vid = $vobj->vid;
+		taxonomy_term_save($term);
+		$tid = $term->tid;
+	}
+	return $tid;
+}
+
+/***  syncing with course outlines */
+function _sync_outline($term) { // four digit code ie '1147'
+
+	// get term id
+	$termId = _get_term($term);
+ 	// get all course offering nodes with the term
+	$query = new EntityFieldQuery();
+	$query->entityCondition('entity_type', 'node')
+		->entityCondition('bundle', 'eval_course_offering')
+		->propertyCondition('status', 1)
+		->fieldCondition('field_eval_term', 'target_id', $termId, '=');
+	$result = $query->execute();
+
+	if (!empty($result['node'])) {
+		$nids = array_keys($result['node']);
+
+		foreach ($nids as $nid) {
+			$node = node_load($nid, NULL, TRUE);
+		        $title = explode(" ", $node->title);
+
+			// get term name information
+			$termId = $node->field_eval_term['und'][0]['target_id'];
+			$myTerm = node_load($termId);
+			$terms = explode(" ", $myTerm->title);
+
+			$outlineNode = new OutlineApi;
+			$outlineNode->setYear($terms[1]); 
+			$outlineNode->setTerm($terms[0]);
+			$outlineNode->setDepartment($title[0]);
+			$outlineNode->setNumber($title[1]);
+			$outlineNode->setSection($title[2]);
+			$myOutline = $outlineNode->runOutlineReport();
+
+			$node->field_name['und'][0]['value'] = $myOutline['info']['title'];
+			$node->field_description['und'][0]['value'] = $myOutline['info']['description'];
+			$node->field_instructor['und'][0]['value'] = $myOutline['instructor'][0]['name']; 
+			node_save($node);
+		}
+	}
 }

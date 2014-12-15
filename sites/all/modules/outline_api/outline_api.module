@@ -1,0 +1,73 @@
+<?php
+/**
+ * @file
+ * This module provides classes and functions
+ * for interacting with SFU Course Outlines API
+ * Adam Young 2014
+ * API ref: http://www.sfu.ca/outlines/help/api.html
+ *
+ */
+class OutlineApi {
+    public $year;
+    public $term;
+    public $dept;
+    public $number;
+    public $section;
+
+    public function setYear($newval) // ie /api/v1/courses
+    {
+        $this->year = $newval;
+    }
+    public function setTerm($newval) // ie /api/v1/courses
+    {
+        $this->term = $newval;
+    }
+    public function setDepartment($newval) // ie /api/v1/courses
+    {
+        $this->dept = $newval;
+    }
+    public function setNumber($newval) // ie /api/v1/courses
+    {
+        $this->number = $newval;
+    }
+    public function setSection($newval) // ie /api/v1/courses
+    {
+        $this->section = $newval;
+    }
+
+    public function getYear()
+    {
+        return $this->year;
+    }
+    public function getTerm()
+    {
+        return $this->term;
+    }
+    public function getDepartment()
+    {
+        return $this->dept;
+    }
+    public function getNumber()
+    {
+        return $this->number;
+    }
+    public function getSection()
+    {
+        return $this->section;
+    }
+
+    public function runOutlineReport() {
+	    $query = array(
+			    'year' => strtolower($this->year),
+			    'term' => strtolower($this->term),
+			    'dept' => strtolower($this->dept),
+			    'number' => strtolower($this->number),
+			    'section' => strtolower($this->section),
+			  );
+
+	    $res = drupal_http_request('http://www.sfu.ca/bin/wcm/course-outlines?' . drupal_http_build_query($query));
+	    $data = json_decode($res->data, true);
+	return $data;
+    } // this function
+} // this class
+

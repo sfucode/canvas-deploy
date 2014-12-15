@@ -1,0 +1,3 @@
+name = classes for geting information from SFU Course Outline tool API
+description = "SFU Course Outline API tools"
+core = 7.x
