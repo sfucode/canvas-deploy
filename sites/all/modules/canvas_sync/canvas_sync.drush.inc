@@ -5,6 +5,7 @@
 function canvas_sync_drush_command() {
 	$items = array();
 	// Name of the drush command.
+/*
 	$items['sync-canvas'] = array(
 			'description' => 'Synchronize canvas courses',
 			'callback' => 'drush_sync_canvas',
@@ -19,6 +20,7 @@ function canvas_sync_drush_command() {
 				'term' => 'Term to pass to the function',
 				),
 			);
+*/
 	$items['sync'] = array(
 			'description' => 'Sync all course information',
 			'callback' => 'drush_sync_all',
@@ -29,6 +31,7 @@ function canvas_sync_drush_command() {
 	return $items;
 }
 
+/*
 function drush_sync_canvas($term) { // four digit term code '1131'
     _sync_courses($term);
     echo "All done\n";
@@ -38,10 +41,10 @@ function drush_sync_outlines($term) { // four digit term code '1147'
     _sync_outline($term);
     echo "All done\n";
 }
+*/
 
 function drush_sync_all($term) { // four digit term code '1147'
+    echo "\nHere we go!\n";
     _sync_courses($term);
-    echo "All done with Canvas API\n";
-    _sync_outline($term);
-    echo "All done with Course Outline API\n";
+    echo "All done\n";
 }

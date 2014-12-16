@@ -128,6 +128,12 @@ class CanvasReport extends CanvasApi {
         return substr($course->sis_course_id, 0, 4);
     }
 
+    public function getWorkflowState() {
+        $this->resource_path = "/api/v1/courses/".$this->course_id;
+        $course = $this->runReport('GET', 'json');
+        return $course->workflow_state;
+}
+
     // counts of course content
     //
     public function numStudents() {

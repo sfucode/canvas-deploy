@@ -10,8 +10,6 @@ function _sync_courses($term) { // 1147
 	$term_nid = _get_tid_from_termcode($term);
 	$myTerm = node_load($term_nid);
 	$canvasTerm = $myTerm->field_canvas_term_id['und'][0]['value'];
-	// TODO need to check for CID first in order to figure out 
-	// whether to update or create
 	$r = new CanvasReport();
 	$r->setTermCode($canvasTerm);
 	$courses = $r->getCourses();
@@ -20,7 +18,15 @@ function _sync_courses($term) { // 1147
 	// new routine of CID is in both arrays
 
 	foreach($courses as $key => $value) {
-		_prepare_offering($key);
+		// lookup CID in course offering ctypes
+		// if exists, then send to update offering
+		$nid = _get_nid_from_cid($key);
+		if ($nid) {
+			_update_offering($nid);
+			// includes outline information
+		} else {
+			_prepare_offering($key);
+		}
 	}
 
 }
@@ -43,8 +49,22 @@ function _prepare_offering($cid) {
 	$termNid = _get_term($preterm);
 
 	$courseNid = _create_offering($courseCode, $section, $termNid, $departmentTid, $cid);
+	_sync_outline($preterm); // get outline information
 
 	return;
+}
+
+function _get_nid_from_cid($cid) {
+	$query = new EntityFieldQuery();
+	$query->entityCondition('entity_type', 'node')
+		->entityCondition('bundle', 'eval_course_offering')
+		->propertyCondition('status', 1)
+		->fieldCondition('field_eval_canvas_id', 'value', $cid, '=');
+	$result = $query->execute();
+	if ($result) {
+		$nids = array_keys($result['node']);
+		return $nids[0];
+	}
 }
 
 function _create_offering($courseCode, $section, $termNid, $departmentTid, $canvasCode) {
@@ -66,11 +86,47 @@ function _create_offering($courseCode, $section, $termNid, $departmentTid, $canv
 	$entity->field_assignments = $r->numAssignments();
 	$entity->field_quizzes = $r->numQuizzes();
 	$entity->field_discussions = $r->numDiscussions();
+	$entity->field_workflow_state = $r->getWorkflowState();
 
 	$entity->save();
 	$returnNid = $entity->getIdentifier();
 }
 
+function _update_offering($nid) {
+	$node = node_load($nid);
+	$canvasCode = $node->field_eval_canvas_id['und'][0]['value'];
+
+	$r = new CanvasReport();
+	$r->setCourseId($canvasCode);
+
+	$o = new OutlineApi();
+	$title = explode(" ", $node->title);
+
+	// get term name information
+	$termId = $node->field_eval_term['und'][0]['target_id'];
+	$myTerm = node_load($termId);
+	$terms = explode(" ", $myTerm->title);
+	$o->setYear($terms[1]); 
+	$o->setTerm($terms[0]);
+	$o->setDepartment($title[0]);
+	$o->setNumber($title[1]);
+	$o->setSection($title[2]);
+	$myOutline = $o->runOutlineReport();
+
+// api data
+	$node->field_eval_enrollment_count['und'][0]['value'] = $r->numStudents();
+	$node->field_assignments['und'][0]['value'] = $r->numAssignments();
+	$node->field_quizzes['und'][0]['value'] = $r->numQuizzes();
+	$node->field_discussions['und'][0]['value'] = $r->numDiscussions();
+	$node->field_workflow_state['und'][0]['value'] = $r->getWorkflowState();
+// outline data
+	$node->field_name['und'][0]['value'] = $myOutline['info']['title'];
+	$node->field_description['und'][0]['value'] = $myOutline['info']['description'];
+	$node->field_instructor['und'][0]['value'] = $myOutline['instructor'][0]['name']; 
+
+	$node = node_submit($node);
+	node_save($node);
+}
 /*
  *
  */
@@ -129,7 +185,7 @@ function _sync_outline($term) { // four digit code ie '1147'
 
 	// get term id
 	$termId = _get_term($term);
- 	// get all course offering nodes with the term
+	// get all course offering nodes with the term
 	$query = new EntityFieldQuery();
 	$query->entityCondition('entity_type', 'node')
 		->entityCondition('bundle', 'eval_course_offering')
@@ -142,7 +198,7 @@ function _sync_outline($term) { // four digit code ie '1147'
 
 		foreach ($nids as $nid) {
 			$node = node_load($nid, NULL, TRUE);
-		        $title = explode(" ", $node->title);
+			$title = explode(" ", $node->title);
 
 			// get term name information
 			$termId = $node->field_eval_term['und'][0]['target_id'];
