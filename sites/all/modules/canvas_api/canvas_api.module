@@ -134,6 +134,32 @@ class CanvasReport extends CanvasApi {
         return $course->workflow_state;
 }
 
+    public function getAnnouncementsList() {
+        $this->resource_path = "/api/v1/courses/".$this->course_id."/activity_stream";
+        $course = $this->runReport('GET', 'json');
+	$links = array();
+	for($i=0; $i<count($course); $i++) {
+		$links[] = array(
+			'#theme' => 'link',
+			'#text' => $course[$i]->title,
+			'#path' => $course[$i]->html_url,
+			'#options' => array('attributes' =>array('title' => $course[$i]->title)),
+			'#prefix' => '<li>',
+			'#suffix' => '</li>',
+		);
+ 	}
+	if ($links) {
+		$output = "<ul>";
+		$output .= render($links);
+		$output .= "</ul>";
+	} else {
+		$output = NULL;
+	}
+
+	return $output;
+}
+
+
     // counts of course content
     //
     public function numStudents() {
@@ -202,6 +228,23 @@ class CanvasReport extends CanvasApi {
 
 	return $list;
     }
+} // CanvasReport class
 
-}
+class CanvasAction extends CanvasReport {
+
+	public function changeStartDate($date) { // date is in this form '2014-12-25'
+		$this->resource_path = "/api/v1/courses/".$this->course_id;
+		$this->parameter = "course[start_at]=".$date;
+
+		return $this->runReport('PUT', 'json');
+
+	}
+	public function changeEndDate($date) { // date is in this form '2014-12-25'
+		$this->resource_path = "/api/v1/courses/".$this->course_id;
+		$this->parameter = "course[end_at]=".$date;
+
+		return $this->runReport('PUT', 'json');
+
+	}
+} // CanvasAction class
 
